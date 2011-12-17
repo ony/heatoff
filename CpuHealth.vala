@@ -16,12 +16,15 @@ public class CpuHealth {
         scan_chips();
     }
 
+    public int cores { get { return values_count; } }
+
     public void scan_chips() {
         var re_core = new Regex("^Core (\\d+)$");
         unowned Sensors.ChipName? chip_name;
         int chip_nr = 0;
         while((chip_name = Sensors.get_detected_chips(null, ref chip_nr)) != null) {
             //printf("sensor%d: %s\n", chip_nr - 1, chip_name.to_string());
+            chip_name.parse("XXX");
 
             Sensors.Feature? feature;
             int feature_nr = 0;
@@ -31,7 +34,7 @@ public class CpuHealth {
 
                 //printf("  %s\n", label);
 
-                unowned Sensors.SubFeature? subfeature;
+                Sensors.SubFeature? subfeature;
                 int subfeature_nr = 0;
                 while((subfeature = chip_name.get_subfeatures(feature, ref subfeature_nr)) != null) {
                     if (subfeature.type != Sensors.SubFeatureType.TEMP_INPUT) continue;
@@ -45,7 +48,7 @@ public class CpuHealth {
                     values[values_count].chip = chip_name;
                     values[values_count].feature = feature;
                     values[values_count].subfeature = subfeature;
-                    values[values_count].core = (ushort)match.fetch(1).to_int();
+                    values[values_count].core = (ushort)int.parse(match.fetch(1));
 
                     //printf("    Core: %d\n", values[values_count].core);
                     ++values_count;

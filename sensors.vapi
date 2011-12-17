@@ -1,5 +1,7 @@
-[CCode (cprefix = "sensors_", cheader_filename = "sensors/sensors.h")]
+
+[CCode (lower_case_cprefix = "sensors_", cheader_filename = "sensors/sensors.h")]
 namespace Sensors {
+
     [CCode (cname = "libsensors_version")]
     public const string version;
 
@@ -144,7 +146,7 @@ namespace Sensors {
         public uint flags;
     }
 
-    [CCode (cname = "sensors_bus_id", cprefix = "sensors_")]
+    [CCode (cname = "sensors_bus_id", lower_case_cprefix = "sensors_")]
     public struct BusId {
         public BusType type;
         public short nr;
@@ -155,7 +157,7 @@ namespace Sensors {
     /* ChipName and features enumeration
        Note: chips have no copy implementation, so no cast from (unowned) to (owned)
        */
-    [CCode (cname = "sensors_chip_name", cprefix = "sensors_", destroy_function = "sensors_free_chip_name")]
+    [CCode (cname = "sensors_chip_name", lower_case_cprefix = "sensors_", lower_case_csuffix = "_chip_name", destroy_function = "sensors_free_chip_name")]
     public struct ChipName {
         [CCode (default_value = "SENSORS_CHIP_NAME_PREFIX_ANY")]
         public string prefix;
@@ -176,7 +178,7 @@ namespace Sensors {
         public Feature? get_features(ref int nr);
 
         [CCode (cname = "sensors_get_all_subfeatures")]
-        public unowned SubFeature? get_subfeatures(Feature feature, ref int nr);
+        public SubFeature? get_subfeatures(Feature feature, ref int nr);
 
         public string get_label(Feature feature);
 
