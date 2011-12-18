@@ -188,14 +188,16 @@ namespace Sensors {
             {
                 char buf[256];
                 n = snprintf(buf);
-                if (n < 0 ) return @"(error: $(strerror(n)))";
+                //if (n < 0 ) return @"(error: $(strerror(n)))";
+                if (n < 0 ) return "(error)";
                 if (n < buf.length) return (string)buf;
             }
             // Vala wants only literals as size of array
             //char buf[n];
             var buf = new char[n];
             n = snprintf(buf);
-            if (n < 0 ) return @"(error: $n)";
+            // if (n < 0 ) return @"(error: $n)";
+            if (n < 0 ) return "(error)";
             if (n < buf.length) return (string)buf;
         }
     }

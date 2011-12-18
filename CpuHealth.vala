@@ -1,25 +1,30 @@
-using Posix;
 
-public class CpuHealth {
-    private static CpuHealth _instance;
-    public static CpuHealth instance {
-        get {
-            if (_instance == null) _instance = new CpuHealth();
-            return _instance;
-        }
-    }
+public struct CoreSensor {
+    public unowned Sensors.ChipName chip;
+    public unowned Sensors.Feature feature;
+    public unowned Sensors.SubFeature subfeature;
+    public ushort core;
+}
 
-    private Value values[64];
-    private int values_count = 0;
+[CCode (has_target = false)]
+public delegate void core_temp_visitor(int core, double temp);
 
-    private CpuHealth() {
+public struct CpuHealth {
+    private int sensors_count;
+    private CoreSensor sensors[64];
+
+    public CpuHealth() {
         scan_chips();
     }
 
-    public int cores { get { return values_count; } }
+    public int cores { get { return sensors_count; } }
 
     public void scan_chips() {
-        var re_core = new Regex("^Core (\\d+)$");
+        sensors_count = 0;
+
+        var re_core = RegEx();
+        if (!re_core.parse("^Core \\(.*\\)$")) return;
+
         unowned Sensors.ChipName? chip_name;
         int chip_nr = 0;
         while((chip_name = Sensors.get_detected_chips(null, ref chip_nr)) != null) {
@@ -38,41 +43,27 @@ public class CpuHealth {
                 int subfeature_nr = 0;
                 while((subfeature = chip_name.get_subfeatures(feature, ref subfeature_nr)) != null) {
                     if (subfeature.type != Sensors.SubFeatureType.TEMP_INPUT) continue;
-                    //double v;
-                    //Sensors.get_value(chip_name, subfeature.number, out v);
-                    //printf("    %s: %f\n", subfeature.name, v);
+                    RegMatch m[2];
+                    if (!re_core.match(label, m)) continue;
 
-                    MatchInfo match;
-                    if (!re_core.match(label, 0, out match)) continue;
+                    sensors[sensors_count].chip = chip_name;
+                    sensors[sensors_count].feature = feature;
+                    sensors[sensors_count].subfeature = subfeature;
+                    sensors[sensors_count].core = (ushort) m[1].for_string(label).to_int();
 
-                    values[values_count].chip = chip_name;
-                    values[values_count].feature = feature;
-                    values[values_count].subfeature = subfeature;
-                    values[values_count].core = (ushort)int.parse(match.fetch(1));
-
-                    //printf("    Core: %d\n", values[values_count].core);
-                    ++values_count;
+                    //printf("    Core: %d\n", sensors[sensors_count].core);
+                    ++sensors_count;
                 }
             }
         }
     }
 
-    public delegate void temp_handler(int core, double temp);
-    public void scan_values(temp_handler handler) {
-        for(int i = 0; i < values_count; ++i) {
+    public void visit_sensors(core_temp_visitor visitor) {
+        for(int i = 0; i < sensors_count; ++i) {
             double v;
-            Sensors.get_value(values[i].chip, values[i].subfeature.number, out v);
-            handler(values[i].core, v);
+            Sensors.get_value(sensors[i].chip, sensors[i].subfeature.number, out v);
+            visitor(sensors[i].core, v);
         }
-    }
-
-    [Compact]
-    [SimpleType]
-    private struct Value {
-        public unowned Sensors.ChipName chip;
-        public unowned Sensors.Feature feature;
-        public unowned Sensors.SubFeature subfeature;
-        public ushort core;
     }
 
 }
