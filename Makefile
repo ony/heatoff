@@ -3,7 +3,6 @@ VALA_PKGS += sensors cpufreq posix-regex posix-latest
 VAPI_DIRS += .
 LIBS += sensors cpufreq
 CFLAGS += -g
-#VALAFLAGS += --save-temps --profile=dova
 VALAFLAGS += --save-temps --profile=posix -v
 
 include ../mk/top.mk
