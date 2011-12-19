@@ -8,7 +8,7 @@ VALAFLAGS += --save-temps --profile=posix -v
 
 include ../mk/top.mk
 -include vala.mk
--include opt.mk
+#-include opt.mk
 
 $(TARGET): sensors.vapi cpufreq.vapi posix-regex.vapi
 

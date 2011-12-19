@@ -4,20 +4,26 @@ public struct CoreSensor {
     public unowned Sensors.Feature feature;
     public unowned Sensors.SubFeature subfeature;
     public ushort core;
+    public double level {
+        get {
+            double y;
+            Sensors.get_value(chip, subfeature.number, out y);
+            return y;
+        }
+    }
 }
 
-[CCode (has_target = false)]
-public delegate void core_temp_visitor(int core, double temp);
-
 public struct CpuHealth {
-    private int sensors_count;
+    private uint sensors_count;
     private CoreSensor sensors[64];
 
     public CpuHealth() {
         scan_chips();
     }
 
-    public int cores { get { return sensors_count; } }
+    public CoreSensor @get(uint n) { return sensors[n]; }
+
+    public uint cores { get { return sensors_count; } }
 
     public void scan_chips() {
         sensors_count = 0;
@@ -57,13 +63,4 @@ public struct CpuHealth {
             }
         }
     }
-
-    public void visit_sensors(core_temp_visitor visitor) {
-        for(int i = 0; i < sensors_count; ++i) {
-            double v;
-            Sensors.get_value(sensors[i].chip, sensors[i].subfeature.number, out v);
-            visitor(sensors[i].core, v);
-        }
-    }
-
 }
