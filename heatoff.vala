@@ -1,16 +1,24 @@
 using Posix;
 using CpuFreq;
 
-// volatile?
-bool interrupt = false;
+struct SignalsMonitor {
+    // volatile?
+    private static bool sigint_cought = false;
 
-static void sig_handler(int signum) {
-    switch (signum) {
-    case SIGINT: interrupt = true; break;
+    private static void sig_handler(int signum) {
+        switch (signum) {
+        case SIGINT: sigint_cought = true; break;
+        }
     }
+
+    public SignalsMonitor() {
+        sigaction(SIGINT, sigaction_t() { sa_handler = sig_handler } , null);
+    }
+
+    public bool interrupt { get { return sigint_cought; } }
 }
 
-public struct CpuCC {
+struct CpuCC {
     Cpu cpu;
     Hz min_freq;
     Hz max_freq;
@@ -68,7 +76,7 @@ public struct CpuCC {
     }
 }
 
-public struct CpuMasterCC {
+struct CpuMasterCC {
     CpuCC[] children;
     CpuHealth health;
     uint cpus_per_core;
@@ -169,11 +177,11 @@ int main(string[] args) {
     Sensors.init();
     print("libsensors version=%s\n", Sensors.version);
 
-    sigaction(SIGINT, sigaction_t() { sa_handler = sig_handler } , null);
+    var signals_monitor = SignalsMonitor();
 
     var master_cc = CpuMasterCC();
 
-    while(!interrupt) {
+    while(!signals_monitor.interrupt) {
         master_cc.adjust();
         if (master_cc.fully_throttled) sleep(10);
         else sleep(2);
