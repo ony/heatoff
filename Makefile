@@ -1,5 +1,5 @@
 TARGET = heatoff
-VALA_PKGS += sensors cpufreq posix-regex posix-latest
+VALA_PKGS += sensors cpufreq posix-regex posix-missing
 VAPI_DIRS += .
 LIBS += sensors cpufreq
 CFLAGS += -g
@@ -7,7 +7,7 @@ VALAFLAGS += --save-temps --profile=posix -v
 
 include vala.mk
 
-$(TARGET): sensors.vapi cpufreq.vapi posix-regex.vapi
+$(TARGET): sensors.vapi cpufreq.vapi posix-regex.vapi posix-missing.vapi
 
 clean: clean-generated-c
 clean-generated-c:

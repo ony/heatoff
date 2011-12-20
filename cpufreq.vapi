@@ -1,4 +1,4 @@
-/* posix-regex.vapi
+/* cpufreq.vapi
  *
  * Copyright (C) 2011 Nikolay Orlyuk
  *
@@ -124,7 +124,5 @@ namespace CpuFreq {
 
         public Stats stats { owned get; }
         public ulong transitions { get; }
-
-        /* modifications */
     }
 }

@@ -1,4 +1,4 @@
-/* posix-regex.vapi
+/* sensors.vapi
  *
  * Copyright (C) 2011 Nikolay Orlyuk
  *

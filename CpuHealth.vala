@@ -1,4 +1,4 @@
-/* posix-regex.vapi
+/* CpuHealth.vala
  *
  * Copyright (C) 2011 Nikolay Orlyuk
  *

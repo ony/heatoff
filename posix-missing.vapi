@@ -1,4 +1,4 @@
-/* posix-regex.vapi
+/* posix-missing.vapi
  *
  * Copyright (C) 2011 Nikolay Orlyuk
  *
@@ -23,4 +23,29 @@
 namespace Posix {
     [CCode (cheader_filename = "string.h")]
     public string strndup(string s, size_t n);
+
+    [CCode (cheader_filename = "stdlib.h")]
+    public double atof(string nptr);
+
+    [CCode (cheader_filename = "stdlib.h")]
+    public double strtod(string nptr, out unowned string tail);
+
+    [CCode (cheader_filename = "stdlib.h")]
+    public float strtof(string nptr, out unowned string tail);
+
+    // getopt
+    [CCode (cheader_filename = "unistd.h")]
+    public int getopt( [CCode (array_length_pos = 0)] string[] args, string optstring);
+
+    [CCode (cheader_filename = "unistd.h")]
+    public static string optarg;
+
+    [CCode (cheader_filename = "unistd.h")]
+    public static int optind;
+
+    [CCode (cheader_filename = "unistd.h")]
+    public static int opterr;
+
+    [CCode (cheader_filename = "unistd.h")]
+    public static int optopt;
 }

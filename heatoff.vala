@@ -1,4 +1,4 @@
-/* posix-regex.vapi
+/* heatoff.vala
  *
  * Copyright (C) 2011 Nikolay Orlyuk
  *
@@ -22,6 +22,8 @@
 
 using Posix;
 using CpuFreq;
+
+bool verbose = false;
 
 struct SignalsMonitor {
     // volatile?
@@ -56,21 +58,22 @@ struct CpuCC {
 
         // get our current policy
         policy = cpu.policy;
-        print("CPU #%u: %s (current = %.3f MHz, range = [%.3f Mhz; %.3f MHz])\n",
-            cpu, policy.governor,
-            cpu.frequency.mhz,
-            policy.min.mhz, policy.max.mhz);
+        if (verbose) {
+            print("CPU #%u: %s (current = %.3f MHz, range = [%.3f Mhz; %.3f MHz])\n",
+                cpu, policy.governor,
+                cpu.frequency.mhz,
+                policy.min.mhz, policy.max.mhz);
+        }
         
         if (policy.min != min_freq) {
             cpu.modify_policy_min(min_freq);
-            print("  adjusted range to [%.3f MHz; %.3f MHz]\n", policy.min.mhz, policy.max.mhz);
+            if (verbose) print("  adjusted range to [%.3f MHz; %.3f MHz]\n", policy.min.mhz, policy.max.mhz);
             policy = cpu.policy;
         }
     }
 
     public void destroy() {
         policy = null;
-        print("CPU CC #%u destroyed\n", cpu);
     }
 
     public double throttle(double temp, double target) {
@@ -94,7 +97,7 @@ struct CpuCC {
         if (!control) return;
         cpu.modify_policy_max(policy.max);
         policy = cpu.policy;
-        print("CPU #%u: current = %.3f, range = [%.3f; %.3f]\n", cpu, cpu.frequency.mhz, policy.min.mhz, policy.max.mhz);
+        if (verbose) print("CPU #%u: current = %.3f, range = [%.3f; %.3f]\n", cpu, cpu.frequency.mhz, policy.min.mhz, policy.max.mhz);
     }
 }
 
@@ -102,13 +105,14 @@ struct CpuMasterCC {
     CpuCC[] children;
     CpuHealth health;
     uint cpus_per_core;
-    double level_hi;
-    double level_lo;
+    public double level_hi;
+    public double level_lo;
     public bool fully_throttled { get; private set; }
 
-    public CpuMasterCC() {
-        level_hi = 67.9;
-        level_lo = 56.5;
+    public CpuMasterCC(double lo = 56.5, double hi = 67.9) {
+        level_hi = hi;
+        level_lo = lo;
+        if (verbose) printf("Temp range: [%.1f C; %.1f C]\n", level_lo, level_hi);
         fully_throttled = false;
 
         detect_children();
@@ -124,7 +128,6 @@ struct CpuMasterCC {
     public void destroy() {
         for(uint i = 0; i < children.length; ++i) children[i].destroy();
         children = null;
-        print("CPU MasterCC destroyed\n");
     }
 
 
@@ -136,7 +139,7 @@ struct CpuMasterCC {
             if (last_cpu.exists) break;
         }
         children = new CpuCC[(uint)last_cpu + 1];
-        print("Detected %u CPUs\n", children.length);
+        if (verbose) print("Detected %u CPUs\n", children.length);
 
         // init control circles
         for (uint i = 0; i < children.length; ++i) {
@@ -169,24 +172,27 @@ struct CpuMasterCC {
             var sensor = health[core];
             var level = sensor.level;
             total_heat += level;
-            print("Core %d: %.1f C%s\n", sensor.core, level,
-                (level < level_lo) ? " [underheat]" : (level_hi < level) ? " [overheat]" : "");
+            if (verbose) {
+                print("Core %d: %.1f C%s\n", sensor.core, level,
+                    (level_hi < level) ? " [overheat]" : (level < level_hi) ? " [underheat]" : "");
+            }
 
             if (level_hi < level) {
-                print("  throttling\n");
+                if (verbose) print("  throttling\n");
                 esteem_overheat += throttle_core(core, level, level_lo) - level_hi;
             }
             else if (level < level_lo) {
-                //print("  releassing throttle\n");
                 esteem_overheat += throttle_core(core, level, level_hi) - level_lo;
                 fully_throttled = false;
             }
         }
         var heat_per_core = total_heat / health.cores;
-        print("Total heat %.1f C, ", total_heat / health.cores);
-        print("Estimated overheat %.1f C\n", esteem_overheat / health.cores);
+        if (verbose) {
+            print("Total heat %.1f C, ", total_heat / health.cores);
+            print("Estimated overheat %.1f C\n", esteem_overheat / health.cores);
+        }
         if (esteem_overheat > 3) {
-            print("Expecting overheat %.1f C. Cooldown in panic from %.1fC to zero!\n", esteem_overheat, heat_per_core);
+            if (verbose) print("Expecting overheat %.1f C. Cooldown in panic from %.1fC to zero!\n", esteem_overheat, heat_per_core);
             for (uint core = 0; core < health.cores; ++core) throttle_core(core, heat_per_core, 0);
             fully_throttled = true;
         }
@@ -196,19 +202,40 @@ struct CpuMasterCC {
 
 
 int main(string[] args) {
+    int delay = 2;
+    int throttled_delay = 10;
+    double temp_lo = 56.5;
+    double temp_hi = 67.9;
+
+    const string help_fmt = "Usage: %s [-u uppper-temp] [-l lower-temp] [-d check-delay] [-t throttled-check-delay]\n";
+
+    int opt;
+    while ((opt = getopt(args, "u:l:d:t:vh")) != -1) {
+        switch (opt) {
+        case 'u': temp_hi = atof(optarg); break;
+        case 'l': temp_lo = atof(optarg); break;
+        case 'd': delay = optarg.to_int(); break;
+        case 't': throttled_delay = optarg.to_int(); break;
+        case 'v': verbose = true; break;
+
+        case 'h': stdout.printf(help_fmt, args[0]); return 0;
+
+        default: stderr.printf(help_fmt, args[0]); return 1;
+        }
+    }
+
     Sensors.init();
-    print("libsensors version=%s\n", Sensors.version);
+    if (verbose) print("libsensors version=%s\n", Sensors.version);
 
     var signals_monitor = SignalsMonitor();
 
-    var master_cc = CpuMasterCC();
-
-    while(!signals_monitor.interrupt) {
+    var master_cc = CpuMasterCC(temp_lo, temp_hi);
+    
+    while (!signals_monitor.interrupt) {
         master_cc.adjust();
-        if (master_cc.fully_throttled) sleep(10);
-        else sleep(2);
+        if (master_cc.fully_throttled) sleep(throttled_delay);
+        else sleep(delay);
     }
-    print("Exiting...\n");
     Sensors.cleanup();
     return 0;
 }
