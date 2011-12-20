@@ -5,9 +5,7 @@ LIBS += sensors cpufreq
 CFLAGS += -g
 VALAFLAGS += --save-temps --profile=posix -v
 
-include ../mk/top.mk
--include vala.mk
-#-include opt.mk
+include vala.mk
 
 $(TARGET): sensors.vapi cpufreq.vapi posix-regex.vapi
 
