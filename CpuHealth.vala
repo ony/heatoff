@@ -1,3 +1,25 @@
+/* posix-regex.vapi
+ *
+ * Copyright (C) 2011 Nikolay Orlyuk
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *
+ * Author:
+ * 	Nikolay Orlyuk <virkony@gmail.com>
+ */
+
 
 public struct CoreSensor {
     public unowned Sensors.ChipName chip;
@@ -34,16 +56,11 @@ public struct CpuHealth {
         unowned Sensors.ChipName? chip_name;
         int chip_nr = 0;
         while((chip_name = Sensors.get_detected_chips(null, ref chip_nr)) != null) {
-            //printf("sensor%d: %s\n", chip_nr - 1, chip_name.to_string());
-            chip_name.parse("XXX");
-
             Sensors.Feature? feature;
             int feature_nr = 0;
             while((feature = chip_name.get_features(ref feature_nr)) != null) {
                 if (feature.type != Sensors.FeatureType.TEMP) continue;
                 string label = chip_name.get_label(feature);
-
-                //printf("  %s\n", label);
 
                 Sensors.SubFeature? subfeature;
                 int subfeature_nr = 0;
@@ -57,7 +74,6 @@ public struct CpuHealth {
                     sensors[sensors_count].subfeature = subfeature;
                     sensors[sensors_count].core = (ushort) m[1].for_string(label).to_int();
 
-                    //printf("    Core: %d\n", sensors[sensors_count].core);
                     ++sensors_count;
                 }
             }
