@@ -151,7 +151,7 @@ namespace Sensors {
     [CCode (cname = "SENSORS_BUS_NR_IGNORE")]
     public const short bus_nr_ignore;
 
-    /* Note Feature and SubFeature is refs to static objects*/
+    /* Note Feature and SubFeature refs to objects that cleaned up somewhere else */
     [CCode (cname = "sensors_feature", ref_function = "", unref_function = "")]
     public class Feature {
         public unowned string name;
@@ -204,23 +204,21 @@ namespace Sensors {
 
         public string get_label(Feature feature);
 
-        public string to_string()
+        public string? to_string()
         {
             int n;
             {
-                char buf[256];
+                char buf[128];
                 n = snprintf(buf);
-                //if (n < 0 ) return @"(error: $(strerror(n)))";
-                if (n < 0 ) return "(error)";
-                if (n < buf.length) return (string)buf;
+                if (n < 0 ) return null;
+                if (n <= buf.length) return (string)buf;
             }
-            // Vala wants only literals as size of array
-            //char buf[n];
-            var buf = new char[n];
-            n = snprintf(buf);
-            // if (n < 0 ) return @"(error: $n)";
-            if (n < 0 ) return "(error)";
-            if (n < buf.length) return (string)buf;
+
+            // for rare cases
+            var bigbuf = new char[n];
+            n = snprintf(bigbuf);
+            if (n < 0 ) return null;
+            if (n <= bigbuf.length) return (string)bigbuf;
         }
     }
 

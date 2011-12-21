@@ -98,9 +98,12 @@ namespace Posix {
 
         public string error_to_string(RegResult result)
         {
-            char buf[128];
-            var n = error(result, this, buf);
-            if (n <= buf.length) return (string)buf;
+            size_t n;
+            {
+                char buf[128];
+                n = error(result, this, buf);
+                if (n <= buf.length) return (string)buf;
+            }
 
             // in a very rare cases
             var bigbuf = new char[n];

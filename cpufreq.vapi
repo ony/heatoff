@@ -21,7 +21,6 @@
  */
 
 // note that this vapi is based headers and sources of cpufrequtils-008
-using Posix;
 
 [CCode (lower_case_cprefix = "cpufreq_", cheader_filename = "cpufreq.h")]
 namespace CpuFreq {
