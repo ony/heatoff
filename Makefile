@@ -3,7 +3,8 @@ VALA_PKGS += sensors cpufreq posix-regex posix-getopt posix-missing
 VAPI_DIRS += .
 LIBS += sensors cpufreq
 CFLAGS += -g
-VALAFLAGS += --save-temps --profile=posix -v
+VALAFLAGS += --profile=posix
+VALAFLAGS += --save-temps -v
 
 include vala.mk
 

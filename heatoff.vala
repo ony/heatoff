@@ -98,6 +98,7 @@ struct CpuCC {
         cpu.modify_policy_max(policy.max);
         policy = cpu.policy;
         if (verbose) print("CPU #%u: current = %.3f, range = [%.3f; %.3f]\n", cpu, cpu.frequency.mhz, policy.min.mhz, policy.max.mhz);
+        control = false;
     }
 }
 
@@ -154,7 +155,7 @@ struct CpuMasterCC {
         for (uint cpu = base_cpu; cpu < (base_cpu + cpus_per_core); ++cpu) {
             esteem_heat += children[cpu].throttle(temp, target);
         }
-        return esteem_heat / health.cores;
+        return esteem_heat / cpus_per_core;
     }
 
     void commit_core(uint core) {
@@ -174,7 +175,7 @@ struct CpuMasterCC {
             total_heat += level;
             if (verbose) {
                 print("Core %d: %.1f C%s\n", sensor.core, level,
-                    (level_hi < level) ? " [overheat]" : (level < level_hi) ? " [underheat]" : "");
+                    (level_hi < level) ? " [overheat]" : (level < level_lo) ? " [underheat]" : "");
             }
 
             if (level_hi < level) {
@@ -189,7 +190,7 @@ struct CpuMasterCC {
         var heat_per_core = total_heat / health.cores;
         if (verbose) {
             print("Total heat %.1f C, ", total_heat / health.cores);
-            print("Estimated overheat %.1f C\n", esteem_overheat / health.cores);
+            print("Estimated overheat %.1f C\n", esteem_overheat);
         }
         if (esteem_overheat > 3) {
             if (verbose) print("Expecting overheat %.1f C. Cooldown in panic from %.1fC to zero!\n", esteem_overheat, heat_per_core);
