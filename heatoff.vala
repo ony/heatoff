@@ -20,7 +20,6 @@
  * 	Nikolay Orlyuk <virkony@gmail.com>
  */
 
-using Posix;
 using CpuFreq;
 
 bool verbose = false;
@@ -31,18 +30,18 @@ struct SignalsMonitor {
 
     private static void sig_handler(int signum) {
         switch (signum) {
-        case SIGINT: sigint_cought = true; break;
+        case Posix.SIGINT: sigint_cought = true; break;
         }
     }
 
     public SignalsMonitor() {
-        sigaction(SIGINT, sigaction_t() { sa_handler = sig_handler } , null);
+        Posix.sigaction(Posix.SIGINT, Posix.sigaction_t() { sa_handler = sig_handler } , null);
     }
 
     public bool interrupt { get { return sigint_cought; } }
 }
 
-struct CpuCC {
+class CpuCC {
     Cpu cpu;
     Hz min_freq;
     Hz max_freq;
@@ -72,9 +71,11 @@ struct CpuCC {
         }
     }
 
+    /*
     public void destroy() {
         policy = null;
     }
+    */
 
     public double throttle(double temp, double target) {
         var freq = cpu.frequency;
@@ -102,7 +103,7 @@ struct CpuCC {
     }
 }
 
-struct CpuMasterCC {
+class CpuMasterCC {
     CpuCC[] children;
     CpuHealth health;
     uint cpus_per_core;
@@ -113,7 +114,7 @@ struct CpuMasterCC {
     public CpuMasterCC(double lo = 56.5, double hi = 67.9) {
         level_hi = hi;
         level_lo = lo;
-        if (verbose) printf("Temp range: [%.1f C; %.1f C]\n", level_lo, level_hi);
+        if (verbose) Posix.printf("Temp range: [%.1f C; %.1f C]\n", level_lo, level_hi);
         fully_throttled = false;
 
         detect_children();
@@ -126,10 +127,12 @@ struct CpuMasterCC {
         cpus_per_core = children.length / health.cores;
     }
 
+    /*
     public void destroy() {
-        for(uint i = 0; i < children.length; ++i) children[i].destroy();
+        for(uint i = 0; i < children.length; ++i) delete children[i].destroy();
         children = null;
     }
+    */
 
 
     void detect_children() {
@@ -144,7 +147,7 @@ struct CpuMasterCC {
 
         // init control circles
         for (uint i = 0; i < children.length; ++i) {
-            children[i] = CpuCC(i);
+            children[i] = new CpuCC(i);
         }
 
     }
@@ -211,12 +214,12 @@ int main(string[] args) {
     const string help_fmt = "Usage: %s [-u uppper-temp] [-l lower-temp] [-d check-delay] [-t throttled-check-delay]\n";
 
     int opt;
-    while ((opt = getopt(args, "u:l:d:t:vh")) != -1) {
+    while ((opt = Posix.getopt(args, "u:l:d:t:vh")) != -1) {
         switch (opt) {
-        case 'u': temp_hi = atof(optarg); break;
-        case 'l': temp_lo = atof(optarg); break;
-        case 'd': delay = optarg.to_int(); break;
-        case 't': throttled_delay = optarg.to_int(); break;
+        case 'u': temp_hi = double.parse(Posix.optarg); break;
+        case 'l': temp_lo = double.parse(Posix.optarg); break;
+        case 'd': delay = int.parse(Posix.optarg); break;
+        case 't': throttled_delay = int.parse(Posix.optarg); break;
         case 'v': verbose = true; break;
 
         case 'h': stdout.printf(help_fmt, args[0]); return 0;
@@ -230,12 +233,12 @@ int main(string[] args) {
 
     var signals_monitor = SignalsMonitor();
 
-    var master_cc = CpuMasterCC(temp_lo, temp_hi);
+    var master_cc = new CpuMasterCC(temp_lo, temp_hi);
     
     while (!signals_monitor.interrupt) {
         master_cc.adjust();
-        if (master_cc.fully_throttled) sleep(throttled_delay);
-        else sleep(delay);
+        if (master_cc.fully_throttled) Posix.sleep(throttled_delay);
+        else Posix.sleep(delay);
     }
     Sensors.cleanup();
     return 0;

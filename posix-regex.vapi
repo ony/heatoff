@@ -63,7 +63,7 @@ namespace Posix {
         RegOff end;
 
         public string for_string(string s) {
-            return strndup((string)((char*)s + start), end - start);
+            return s.substring(start, end - start);
         }
     }
 

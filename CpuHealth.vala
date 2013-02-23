@@ -20,6 +20,7 @@
  * 	Nikolay Orlyuk <virkony@gmail.com>
  */
 
+using Posix;
 
 public struct CoreSensor {
     public unowned Sensors.ChipName chip;
@@ -72,7 +73,7 @@ public struct CpuHealth {
                     sensors[sensors_count].chip = chip_name;
                     sensors[sensors_count].feature = feature;
                     sensors[sensors_count].subfeature = subfeature;
-                    sensors[sensors_count].core = (ushort) m[1].for_string(label).to_int();
+                    sensors[sensors_count].core = (ushort) int.parse(m[1].for_string(label));
 
                     ++sensors_count;
                 }

@@ -2,10 +2,10 @@ ifndef __VALA_MK__
 __VALA_MK__=1
 
 SRCS = $(wildcard *.vala)
-VALA_VERSION ?= 0.14
-VALAC := /usr/local/pkgs/vala-git/bin/valac-0.16
+#VALA_VERSION ?= 0.18
+#VALA_SUFFIX ?= -$(VALA_VERSION)
 #VALAC ?= valac$(VALA_SUFFIX)
-VALA_SUFFIX ?= -$(VALA_VERSION)
+VALAC ?= valac
 #VALA_PACKAGES += gtk+-3.0
 VALAFLAGS += $(patsubst %,--pkg=%,$(VALA_PKGS)) $(patsubst %,-X %,$(CFLAGS))
 VALAFLAGS += $(patsubst %,--vapidir=%,$(VAPI_DIRS))

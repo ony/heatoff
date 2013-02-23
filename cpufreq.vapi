@@ -20,7 +20,7 @@
  * 	Nikolay Orlyuk <virkony@gmail.com>
  */
 
-// note that this vapi is based headers and sources of cpufrequtils-008
+// note that this vapi is based on headers and sources of cpufrequtils-008
 
 [CCode (lower_case_cprefix = "cpufreq_", cheader_filename = "cpufreq.h")]
 namespace CpuFreq {
